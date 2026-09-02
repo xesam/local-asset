@@ -1,0 +1,12 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
+
+.page { padding: 24px; }
+.pill { display: inline-block; padding: 6px 12px; border-radius: 999px; }
+.chain-card { margin-top: 16px; padding: 16px; border-radius: 18px; background: rgba(255,255,255,0.78); }
+.chain-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.chain-row img { width: 160px; height: auto; border-radius: 12px; }
+.chain-row .label { font-size: 13px; color: #475569; max-width: 220px; }
+code { word-break: break-all; }

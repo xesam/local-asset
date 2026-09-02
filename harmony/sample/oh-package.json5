@@ -1,0 +1,12 @@
+{
+  "name": "entry",
+  "version": "0.0.1",
+  "description": "LocalAsset HarmonyOS sample",
+  "main": "",
+  "author": "xesam",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "io.github.xesam.harmony.localasset.core": "file:../localasset-core",
+    "io.github.xesam.harmony.localasset.webview": "file:../localasset-webview"
+  }
+}

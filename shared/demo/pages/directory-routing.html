@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>目录路由</title>
+  <link rel="stylesheet" href="_ui.css">
+  <link rel="stylesheet" href="local-asset://cdn.demo.local/pkg/home.css">
+</head>
+<body>
+  <div class="page">
+    <a href="index.html" onclick="return goBack(event)" style="display:inline-block;margin-bottom:14px;padding:6px 14px;border-radius:999px;background:#0f172a;color:#fff;text-decoration:none;font-size:12px;font-family:sans-serif;">&#8592; 返回示例列表</a>
+    <button type="button" onclick="location.reload()" style="margin-left:8px;padding:6px 14px;border-radius:999px;border:none;background:#475569;color:#fff;font-size:12px;font-family:sans-serif;">Reload</button>
+    <span class="pill">目录路由</span>
+    <h1>通过单条前缀规则加载资源包</h1>
+    <p id="summary">等待 pkg/home.js...</p>
+    <div class="grid">
+      <div class="pkg-card">
+        <img src="local-asset://cdn.demo.local/pkg/cards/card-a.svg" alt="卡片 A">
+        <span>pkg/cards/card-a.svg</span>
+      </div>
+      <div class="pkg-card">
+        <img src="local-asset://cdn.demo.local/pkg/cards/card-b.svg" alt="卡片 B">
+        <span>pkg/cards/card-b.svg</span>
+      </div>
+    </div>
+  </div>
+  <script>
+    // 返回链接与系统返回键走同一条路径。
+    //
+    // 若用默认的 <a href="index.html"> 跳转，会**新增**一条历史记录而不是后退，
+    // 于是"首页 → 详情 → 点链接回首页 → 按系统返回"又回到详情页。改用
+    // history.back() 后历史栈不再增长，两种返回方式行为一致。
+    //
+    // 兜底分支应对直接深链进入、历史里没有上一条的情况；此时 href 的默认跳转生效。
+    function goBack(event) {
+      if (history.length > 1) {
+        event.preventDefault();
+        history.back();
+        return false;
+      }
+      return true;
+    }
+  </script>
+  <script src="local-asset://cdn.demo.local/pkg/home.js"></script>
+</body>
+</html>

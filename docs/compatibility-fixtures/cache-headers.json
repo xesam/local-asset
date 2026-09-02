@@ -1,0 +1,54 @@
+[
+  {
+    "name": "static-bytes-cacheable",
+    "input": {
+      "type": "static",
+      "source": "bytes",
+      "id": "logo",
+      "size": 1024
+    },
+    "expected": {
+      "cacheControl": "public, max-age=86400",
+      "etag": "\"logo-1024\""
+    }
+  },
+  {
+    "name": "dynamic-bytes-no-store",
+    "input": {
+      "type": "dynamic",
+      "source": "bytes",
+      "id": "thumb",
+      "size": 512
+    },
+    "expected": {
+      "cacheControl": "no-store",
+      "etag": "\"thumb-512\""
+    }
+  },
+  {
+    "name": "static-stream-weak-etag",
+    "input": {
+      "type": "static",
+      "source": "stream",
+      "id": "cdn.demo.local:/pkg/home.css"
+    },
+    "expected": {
+      "cacheControl": "public, max-age=86400",
+      "etag": "W/\"cdn.demo.local:/pkg/home.css\""
+    }
+  },
+  {
+    "name": "static-bytes-custom-max-age",
+    "input": {
+      "type": "static",
+      "source": "bytes",
+      "id": "logo",
+      "size": 1024,
+      "maxAgeSeconds": 60
+    },
+    "expected": {
+      "cacheControl": "public, max-age=60",
+      "etag": "\"logo-1024\""
+    }
+  }
+]

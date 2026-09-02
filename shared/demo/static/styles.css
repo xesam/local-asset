@@ -1,0 +1,51 @@
+body {
+  margin: 0;
+  font-family: "Avenir Next", sans-serif;
+  background: linear-gradient(180deg, #fef3c7, #fff7ed);
+  color: #7c2d12;
+}
+
+.page { padding: 24px; }
+
+.pill {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #7c2d12;
+  color: #fff7ed;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.card {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.78);
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.asset-column {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(254, 243, 199, 0.72);
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a3412;
+}
+
+img {
+  width: 96px;
+  height: 96px;
+}

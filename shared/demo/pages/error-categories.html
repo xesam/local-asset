@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>错误分类</title>
+  <link rel="stylesheet" href="_ui.css">
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #f8fafc; color: #0f172a; }
+    .page { padding: 24px; }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    .lede { margin: 0 0 16px; color: #475569; line-height: 1.5; }
+    code { background: #e2e8f0; padding: 2px 6px; border-radius: 6px; font-size: 12px; word-break: break-all; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; background: white; border-radius: 16px; overflow: hidden; }
+    th, td { padding: 12px 14px; text-align: left; font-size: 13px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    th { background: #f1f5f9; font-size: 12px; letter-spacing: 0.04em; color: #475569; }
+    td.cat { font-family: ui-monospace, monospace; font-weight: 600; white-space: nowrap; }
+    .PARSE_ERROR { color: #db2777; }
+    .RESOLUTION_ERROR { color: #2563eb; }
+    .LOAD_ERROR { color: #d97706; }
+    .SECURITY_ERROR { color: #dc2626; }
+    button { padding: 8px 12px; border: none; border-radius: 999px; background: #0f172a; color: white; }
+    .stage { font-family: ui-monospace, monospace; font-size: 12px; color: #475569; white-space: nowrap; }
+    .msg { color: #475569; }
+    .pending { color: #94a3b8; }
+
+    /*
+      本页是「元素内横滚」的唯一例外。五列表格硬折行会毁掉 category 与 stage
+      的横向对照可读性 —— 而这正是本页要演示的东西。页面自身仍由 _ui.css
+      的 overflow-x: hidden 守住，不动。
+
+      min-width 必需：只给 overflow-x: auto 而不给最小宽度，表格会被压到
+      容器 100% 宽后逐字折行，容器永远不产生滚动条，包了等于没包。
+    */
+    .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .scroll-x table { min-width: 560px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <a href="index.html" onclick="return goBack(event)" style="display:inline-block;margin-bottom:14px;padding:6px 14px;border-radius:999px;background:#0f172a;color:#fff;text-decoration:none;font-size:12px;font-family:sans-serif;">&#8592; 返回示例列表</a>
+    <button type="button" onclick="location.reload()" style="margin-left:8px;padding:6px 14px;border-radius:999px;border:none;background:#475569;color:#fff;font-size:12px;font-family:sans-serif;">Reload</button>
+    <h1>错误分类与阶段</h1>
+    <p class="lede">所有失败归入四类之一（<code>PARSE_ERROR</code> / <code>RESOLUTION_ERROR</code> / <code>LOAD_ERROR</code> / <code>SECURITY_ERROR</code>），并标记发生的链路阶段。WebView 拦截只回 404，看不到类别 —— 这里由原生 <code>engine.resolve</code> 捕获 <code>ResourceException</code> 后回传 <code>category + stage</code>。</p>
+
+    <div class="scroll-x">
+      <table>
+        <thead>
+          <tr><th>触发</th><th>说明</th><th>category</th><th>stage</th><th>message</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><button data-kind="parse">PARSE</button></td>
+            <td>非法 URL（无 host）</td>
+            <td class="cat pending" id="cat-parse">—</td>
+            <td class="stage" id="stage-parse">—</td>
+            <td class="msg" id="msg-parse">—</td>
+          </tr>
+          <tr>
+            <td><button data-kind="resolution">RESOLUTION</button></td>
+            <td>无 resolver 命中</td>
+            <td class="cat pending" id="cat-resolution">—</td>
+            <td class="stage" id="stage-resolution">—</td>
+            <td class="msg" id="msg-resolution">—</td>
+          </tr>
+          <tr>
+            <td><button data-kind="load">LOAD</button></td>
+            <td>FilePath 在允许根下但缺失</td>
+            <td class="cat pending" id="cat-load">—</td>
+            <td class="stage" id="stage-load">—</td>
+            <td class="msg" id="msg-load">—</td>
+          </tr>
+          <tr>
+            <td><button data-kind="security">SECURITY</button></td>
+            <td>ENGINE scope · namespace 不匹配</td>
+            <td class="cat pending" id="cat-security">—</td>
+            <td class="stage" id="stage-security">—</td>
+            <td class="msg" id="msg-security">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // 返回链接与系统返回键走同一条路径。
+    //
+    // 若用默认的 <a href="index.html"> 跳转，会**新增**一条历史记录而不是后退，
+    // 于是"首页 → 详情 → 点链接回首页 → 按系统返回"又回到详情页。改用
+    // history.back() 后历史栈不再增长，两种返回方式行为一致。
+    //
+    // 兜底分支应对直接深链进入、历史里没有上一条的情况；此时 href 的默认跳转生效。
+    function goBack(event) {
+      if (history.length > 1) {
+        event.preventDefault();
+        history.back();
+        return false;
+      }
+      return true;
+    }
+  </script>
+
+  <script>
+    window.LocalAssetSampleNative = {
+      onResult(payload) {
+        const kind = payload.kind;
+        const r = payload.result;
+        const cat = document.getElementById(`cat-${kind}`);
+        const stage = document.getElementById(`stage-${kind}`);
+        const msg = document.getElementById(`msg-${kind}`);
+        cat.textContent = r.category;
+        cat.className = `cat ${r.category}`;
+        stage.textContent = r.stage ?? "—";
+        msg.textContent = r.message ?? "—";
+      },
+    };
+
+    document.querySelectorAll("button[data-kind]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        NativeSampleBridge.trigger(btn.dataset.kind);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JSBridge 图片选择器</title>
+  <link rel="stylesheet" href="_ui.css">
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #f8fafc; color: #0f172a; }
+    .page { padding: 24px; }
+    .actions { display: flex; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+    button { padding: 10px 14px; border: none; border-radius: 999px; background: #0f172a; color: white; }
+    .preview { width: 100%; min-height: 240px; border-radius: 16px; background: white; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .preview img { max-width: 100%; max-height: 360px; object-fit: contain; }
+    pre { white-space: pre-wrap; word-break: break-word; margin-top: 16px; padding: 16px; border-radius: 16px; background: white; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <a href="index.html" onclick="return goBack(event)" style="display:inline-block;margin-bottom:14px;padding:6px 14px;border-radius:999px;background:#0f172a;color:#fff;text-decoration:none;font-size:12px;font-family:sans-serif;">&#8592; 返回示例列表</a>
+    <button type="button" onclick="window.NativeSampleBridge.resetSession()" style="margin-left:8px;padding:6px 14px;border-radius:999px;border:none;background:#475569;color:#fff;font-size:12px;font-family:sans-serif;">Reset</button>
+    <h1>JSBridge 图片选择器</h1>
+    <p>从原生端选择图片，通过可解析的 <code>previewUri</code> 预览，再将同一 previewUri 提交回原生端。</p>
+    <div class="actions">
+      <button id="chooseBtn">选择图片</button>
+      <button id="submitBtn" disabled>提交</button>
+    </div>
+    <div class="preview" id="previewContainer">未选择图片</div>
+    <pre id="result">等待交互...</pre>
+  </div>
+  <script>
+    // 返回链接与系统返回键走同一条路径。
+    //
+    // 若用默认的 <a href="index.html"> 跳转，会**新增**一条历史记录而不是后退，
+    // 于是"首页 → 详情 → 点链接回首页 → 按系统返回"又回到详情页。改用
+    // history.back() 后历史栈不再增长，两种返回方式行为一致。
+    //
+    // 兜底分支应对直接深链进入、历史里没有上一条的情况；此时 href 的默认跳转生效。
+    function goBack(event) {
+      if (history.length > 1) {
+        event.preventDefault();
+        history.back();
+        return false;
+      }
+      return true;
+    }
+  </script>
+  <script>
+    const previewContainer = document.getElementById("previewContainer");
+    const result = document.getElementById("result");
+    const submitBtn = document.getElementById("submitBtn");
+    let currentSelection = null;
+
+    window.LocalAssetSampleNative = {
+      _chooseResolve: null,
+      _chooseReject: null,
+      _submitResolve: null,
+      _submitReject: null,
+      chooseImage() {
+        console.log("[LocalAssetSample] chooseImage invoked");
+        return new Promise((resolve, reject) => {
+          this._chooseResolve = resolve;
+          this._chooseReject = reject;
+          NativeSampleBridge.chooseImage();
+        });
+      },
+      submitImage(previewUri) {
+        console.log("[LocalAssetSample] submitImage invoked", previewUri);
+        return new Promise((resolve, reject) => {
+          this._submitResolve = resolve;
+          this._submitReject = reject;
+          NativeSampleBridge.submitImage(previewUri);
+        });
+      },
+      onChooseSuccess(payload) { this._chooseResolve && this._chooseResolve(payload); },
+      onChooseError(message) { this._chooseReject && this._chooseReject(new Error(message)); },
+      onSubmitSuccess(payload) { this._submitResolve && this._submitResolve(payload); },
+      onSubmitError(message) { this._submitReject && this._submitReject(new Error(message)); }
+    };
+
+    document.getElementById("chooseBtn").addEventListener("click", async () => {
+      try {
+        const payload = await window.LocalAssetSampleNative.chooseImage();
+        currentSelection = payload;
+        submitBtn.disabled = false;
+        previewContainer.innerHTML = `<img src="${payload.previewUri}" alt="${payload.fileName}">`;
+        result.textContent = JSON.stringify(payload, null, 2);
+        console.log("[LocalAssetSample] previewUri received", payload.previewUri);
+      } catch (error) {
+        result.textContent = String(error);
+      }
+    });
+
+    document.getElementById("submitBtn").addEventListener("click", async () => {
+      if (!currentSelection) return;
+      try {
+        const payload = await window.LocalAssetSampleNative.submitImage(currentSelection.previewUri);
+        result.textContent = JSON.stringify(payload, null, 2);
+        console.log("[LocalAssetSample] submitted previewUri", currentSelection.previewUri);
+      } catch (error) {
+        result.textContent = String(error);
+      }
+    });
+  </script>
+</body>
+</html>

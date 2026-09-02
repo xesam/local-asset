@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LocalAsset 示例</title>
+  <!--
+    首页刻意**不引用任何 local-asset:// 资源**，全部样式内联。
+
+    其余 8 个页面里的 CSS（static/styles.css、pkg/home.css、base/layout.css）本身就是
+    被演示的负载 —— 它们要经引擎拦截才加载得到。首页是进入演示的入口，若它也依赖
+    引擎，一旦引擎配置出问题，用户看到的就是一片白屏而非一个能用的列表，连"哪个场景
+    坏了"都无从点起。这条依赖必须保持为零。
+  -->
+  <style>
+    /*
+      与 _ui.css 等价的页面级横滑守卫，此处刻意重复。
+
+      本页不引用任何外部资源（理由见上方 head 注释：引擎配置出问题时它仍须
+      是一个可用的入口列表），因此不能 <link> _ui.css。改动其中一处时请同步
+      另一处。
+    */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { max-width: 100%; overflow-x: hidden; }
+    body { overflow-wrap: anywhere; }
+    img { max-width: 100%; }
+
+    body { margin: 0; font-family: sans-serif; background: #f8fafc; color: #0f172a; }
+    .page { padding: 24px; }
+    h1 { font-size: 22px; margin: 0 0 6px; }
+    .lede { margin: 0 0 20px; color: #475569; line-height: 1.5; font-size: 14px; }
+    .group { margin-bottom: 24px; }
+    .group-title { font-size: 13px; font-weight: 600; color: #0f172a; margin: 0 0 4px; }
+    .group-summary { font-size: 12px; color: #64748b; line-height: 1.5; margin: 0 0 12px; }
+    .card {
+      display: block; text-decoration: none; color: inherit;
+      background: white; border: 1px solid #e2e8f0; border-radius: 16px;
+      padding: 14px 16px; margin-bottom: 10px;
+    }
+    .card:active { background: #f1f5f9; }
+    .card-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+    .card-title { font-size: 15px; font-weight: 600; }
+    .spec { font-size: 10px; letter-spacing: 0.06em; color: white; background: #0891b2; border-radius: 999px; padding: 2px 8px; }
+    .card-summary { font-size: 12px; color: #475569; line-height: 1.5; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>LocalAsset 示例</h1>
+    <p class="lede">每个条目对应 <code>docs/compatibility.md</code> 里的一条 sample flow —— 编号在 §12（Android）与 §13（HarmonyOS）两章中一一对应，故此处只标末位。三端加载的是同一份页面，行为应完全一致。</p>
+
+    <div class="group">
+      <p class="group-title">句柄能力</p>
+      <p class="group-summary">registerHandle 返回可吊销、会过期的 capability URI；运行时动态资源的核心卖点。</p>
+      <a class="card" href="handle-lifecycle.html">
+        <span class="card-head"><span class="card-title">句柄生命周期</span><span class="spec">用例 .3</span></span>
+        <p class="card-summary">注册一条 capability URI，TTL 到点或吊销后同一 URI 再访问即 RESOLUTION_ERROR。</p>
+      </a>
+      <a class="card" href="jsbridge-image-picker.html">
+        <span class="card-head"><span class="card-title">JSBridge 图片选择器</span><span class="spec">用例 .8</span></span>
+        <p class="card-summary">Web 端从原生选择图片，经 previewUri 预览，再把 previewUri 提交回原生取回文件结果。</p>
+      </a>
+    </div>
+
+    <div class="group">
+      <p class="group-title">安全模型</p>
+      <p class="group-summary">Handle 路径（capability）与 Registry 路径（namespace/scope）两套访问控制模型对照。</p>
+      <a class="card" href="security-models.html">
+        <span class="card-head"><span class="card-title">两套安全模型</span><span class="spec">用例 .4</span></span>
+        <p class="card-summary">同一张图分别用 registerHandle 与 Registry(ENGINE scope) 注册：handle 任意上下文可解析，registry 仅 namespace 匹配才通过。</p>
+      </a>
+    </div>
+
+    <div class="group">
+      <p class="group-title">解析链路</p>
+      <p class="group-summary">Resolver 链有序短路：首个 Hit 即终止，自定义 resolver 可覆盖基础映射。</p>
+      <a class="card" href="resolver-chain.html">
+        <span class="card-head"><span class="card-title">解析器短路覆盖</span><span class="spec">用例 .6</span></span>
+        <p class="card-summary">高优先级 resolver 拦截 banner.svg 并短路覆盖基础目录 resolver；同级 card.svg 落到基础目录 resolver。</p>
+      </a>
+      <a class="card" href="static-mapping.html">
+        <span class="card-head"><span class="card-title">静态映射</span><span class="spec">用例 .1</span></span>
+        <p class="card-summary">CSS / JS / 左图经本库接管；右图是同类对照资源，刻意不接管，走 WebView 默认加载路径。</p>
+      </a>
+      <a class="card" href="directory-routing.html">
+        <span class="card-head"><span class="card-title">目录路由</span><span class="spec">用例 .2</span></span>
+        <p class="card-summary">单条 host + 前缀规则映射整个资源包，无需逐个注册。</p>
+      </a>
+    </div>
+
+    <div class="group">
+      <p class="group-title">错误契约</p>
+      <p class="group-summary">四类错误各自停在自己的阶段，category + stage 回传 H5；失败不影响页面稳定。</p>
+      <a class="card" href="error-categories.html">
+        <span class="card-head"><span class="card-title">错误分类与阶段</span><span class="spec">用例 .5</span></span>
+        <p class="card-summary">PARSE / RESOLUTION / LOAD / SECURITY 四类错误逐一触发，核对各自停在哪个 stage。</p>
+      </a>
+      <a class="card" href="graceful-degradation.html">
+        <span class="card-head"><span class="card-title">优雅降级</span><span class="spec">用例 .7</span></span>
+        <p class="card-summary">有效 / 缺失 / 已吊销资源同屏，失败的子资源降级，页面保持稳定不崩溃。</p>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

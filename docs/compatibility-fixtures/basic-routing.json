@@ -1,0 +1,30 @@
+[
+  {
+    "name": "parse-basic-local-asset-url",
+    "input": {
+      "url": "local-asset://image/logo?id=home&theme=dark"
+    },
+    "expected": {
+      "category": "parse",
+      "scheme": "local-asset",
+      "namespace": "image",
+      "identifier": "logo",
+      "query": {
+        "id": "home",
+        "theme": "dark"
+      }
+    }
+  },
+  {
+    "name": "reject-invalid-local-asset-url",
+    "input": {
+      "url": "local-asset:///invalid"
+    },
+    "expected": {
+      "category": "parse",
+      "resolution": "failure",
+      "errorCategory": "parse_error",
+      "resolverExecuted": false
+    }
+  }
+]

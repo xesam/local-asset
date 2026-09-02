@@ -1,0 +1,37 @@
+/*
+  demo 各页的页面级布局守卫。
+
+  **本文件不是演示负载。** 它经普通相对路径（file:// / rawfile://）加载，
+  不经过 local-asset 引擎。这一点与 static/styles.css、base/layout.css、
+  pkg/home.css 相反 —— 那三个是被演示的资源，必须经引擎拦截才加载得到，
+  页面里用 local-asset:// 引用。resolver-chain.html 等页面会同时出现两种
+  <link>，看到时请按此区分。
+
+  规则目标：页面自身永不横向滑动。内容过宽时要么就地换行，要么由该元素
+  自己的容器横滚（见 error-categories.html 的 .scroll-x）。
+
+  注意：index.html 刻意不引用本文件，而是内联了一份等价规则 —— 它必须在
+  引擎配置出错时仍是一个可用的入口列表，故保持零外部依赖。改动本文件时
+  请同步那一份。
+*/
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* 长不可断串（capability URI、handle token、错误 message）就地折行 */
+body { overflow-wrap: anywhere; }
+
+/*
+  只设 max-width，不设 width。演示负载 CSS 设的是 width（96px / 120px / 160px），
+  层叠上属性不同不冲突：窄屏时本条收缩图片，宽屏时负载的原尺寸不受影响。
+  这让 pkg/home.css 的 2 列固定网格在窄屏也撑不破页面，无需改动负载本身。
+
+  代价：只收缩 width 不动 height，宽高比会失真 —— 320px 下 directory-routing
+  的 pkg-card 图片渲染为 96×120（原 120×120），约 330px 以下才出现。
+  另一条路是改演示负载 CSS，但负载必须保持被演示的原样，故刻意不改，接受这个失真。
+*/
+img { max-width: 100%; }

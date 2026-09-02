@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>静态映射</title>
+  <link rel="stylesheet" href="_ui.css">
+  <link rel="stylesheet" href="local-asset://assets.demo.local/static/styles.css">
+</head>
+<body>
+  <div class="page">
+    <a href="index.html" onclick="return goBack(event)" style="display:inline-block;margin-bottom:14px;padding:6px 14px;border-radius:999px;background:#0f172a;color:#fff;text-decoration:none;font-size:12px;font-family:sans-serif;">&#8592; 返回示例列表</a>
+    <button type="button" onclick="location.reload()" style="margin-left:8px;padding:6px 14px;border-radius:999px;border:none;background:#475569;color:#fff;font-size:12px;font-family:sans-serif;">Reload</button>
+    <span class="pill">静态映射</span>
+    <h1>目录映射静态资源</h1>
+    <p id="status">等待映射脚本...</p>
+    <div class="card compare-grid">
+      <div class="asset-column">
+        <p class="eyebrow">经 LocalAsset 拦截</p>
+        <img id="mappedLogo" src="local-asset://assets.demo.local/static/images/logo.svg" alt="LocalAsset 映射的 logo">
+        <p id="mappedResult">等待 LocalAsset 图片...</p>
+      </div>
+      <div class="asset-column">
+        <p class="eyebrow">默认资源加载</p>
+        <img id="httpLogo" src="https://gips0.baidu.com/it/u=3602773692,1512483864&fm=3028&app=3028&f=JPEG&fmt=auto?w=960&h=1280" alt="不经 LocalAsset 加载的对比图片">
+        <p id="httpResult">等待对比图片...</p>
+      </div>
+    </div>
+    <div class="card">
+      <p>此页面 Shell 来自 <code>android_asset</code>。样式表、脚本和左侧图片均来自 <code>local-asset://assets.demo.local/static/*</code>。右侧图片是相同类型的对比资源，刻意不经 LocalAsset 处理，通过 WebView 默认路径加载。</p>
+    </div>
+  </div>
+  <script>
+    // 返回链接与系统返回键走同一条路径。
+    //
+    // 若用默认的 <a href="index.html"> 跳转，会**新增**一条历史记录而不是后退，
+    // 于是"首页 → 详情 → 点链接回首页 → 按系统返回"又回到详情页。改用
+    // history.back() 后历史栈不再增长，两种返回方式行为一致。
+    //
+    // 兜底分支应对直接深链进入、历史里没有上一条的情况；此时 href 的默认跳转生效。
+    function goBack(event) {
+      if (history.length > 1) {
+        event.preventDefault();
+        history.back();
+        return false;
+      }
+      return true;
+    }
+  </script>
+  <script src="local-asset://assets.demo.local/static/app.js"></script>
+</body>
+</html>

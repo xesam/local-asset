@@ -1,0 +1,28 @@
+/oh_modules
+**/oh_modules
+/local.properties
+/.hvigor
+**/build
+**/.test
+/.idea
+/.clangd
+/.clang-format
+/.clang-tidy
+/.appanalyzer
+
+# Task 11: 由 hvigorfile.ts 在每次构建时生成的 fixture 绝对路径常量
+**/FixtureRoot.generated.ets
+
+# hvigor 每次构建生成的模块构建常量（含 BUILD_MODE_NAME/DEBUG 等构建期取值），非源码
+**/BuildProfile.ets
+
+# sample Task 1: 由 scripts/sync-harmony-demo.sh 从 shared/demo 复制而来的演示内容。
+# HarmonyOS rawfile 不支持像 Gradle sourceSets / Xcode folder reference 那样挂载外部目录，
+# 只能物理复制，因此这是构建产物而非源码。
+sample/src/main/resources/rawfile/demo
+
+# 本机签名配置。DevEco Studio 会在首次运行/调试时自动把签名写进 build-profile.json5，
+# 那份配置含能解开 .p12 的口令、且路径绑死 ~/.ohos/ —— 两者都不该进仓库。
+# 但整个 build-profile.json5 又不能忽略（modules/products 是全团队共享的工程结构），
+# 所以只把签名段外置到这里，由 hvigorfile.ts 在构建期注入。见 signing-config.local.json.template。
+signing-config.local.json

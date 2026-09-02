@@ -1,0 +1,6 @@
+{
+  "string": [
+    { "name": "app_name", "value": "LocalAsset Sample" },
+    { "name": "internet_reason", "value": "Load the control image that is intentionally not served by LocalAsset" }
+  ]
+}

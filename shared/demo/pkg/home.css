@@ -1,0 +1,12 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #ecfeff;
+  color: #164e63;
+}
+
+.page { padding: 24px; }
+.pill { display: inline-block; padding: 6px 12px; border-radius: 999px; background: #0891b2; color: white; }
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 18px; }
+.pkg-card { background: white; border-radius: 16px; padding: 16px; display: grid; gap: 8px; justify-items: center; }
+.pkg-card img { width: 120px; height: 120px; }

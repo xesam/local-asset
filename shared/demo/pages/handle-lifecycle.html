@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>句柄生命周期</title>
+  <link rel="stylesheet" href="_ui.css">
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #f8fafc; color: #0f172a; }
+    .page { padding: 24px; }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    .lede { margin: 0 0 16px; color: #475569; line-height: 1.5; }
+    code { background: #e2e8f0; padding: 2px 6px; border-radius: 6px; font-size: 12px; word-break: break-all; }
+    .actions { display: flex; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+    button { padding: 10px 14px; border: none; border-radius: 999px; background: #0f172a; color: white; }
+    button:disabled { opacity: 0.4; }
+    .uri-box { margin: 16px 0; padding: 12px 14px; border-radius: 12px; background: #0f172a; color: #e2e8f0; font-family: ui-monospace, monospace; font-size: 12px; word-break: break-all; min-height: 20px; }
+    .uri-box .tag { display: inline-block; margin-right: 8px; padding: 2px 8px; border-radius: 999px; background: #0891b2; color: white; font-size: 10px; letter-spacing: 0.06em; }
+    .preview { width: 160px; height: 160px; border-radius: 16px; background: white; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #e2e8f0; }
+    .preview img { width: 100%; height: 100%; object-fit: contain; }
+    .preview .empty { color: #94a3b8; font-size: 13px; }
+    .countdown { margin: 12px 0; font-size: 13px; color: #334155; }
+    .countdown strong { font-variant-numeric: tabular-nums; }
+    pre { white-space: pre-wrap; word-break: break-word; margin-top: 16px; padding: 16px; border-radius: 16px; background: white; font-size: 12px; max-height: 280px; overflow: auto; }
+    .ok { color: #16a34a; }
+    .err { color: #dc2626; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <a href="index.html" onclick="return goBack(event)" style="display:inline-block;margin-bottom:14px;padding:6px 14px;border-radius:999px;background:#0f172a;color:#fff;text-decoration:none;font-size:12px;font-family:sans-serif;">&#8592; 返回示例列表</a>
+    <button type="button" onclick="window.NativeSampleBridge.resetSession()" style="margin-left:8px;padding:6px 14px;border-radius:999px;border:none;background:#475569;color:#fff;font-size:12px;font-family:sans-serif;">Reset</button>
+    <h1>句柄生命周期</h1>
+    <p class="lede">registerHandle 返回一条 <code>local-asset://handles/&lt;token&gt;/&lt;file&gt;</code> capability URI —— <strong>不可猜测·可吊销·会过期</strong>。注册后渲染；TTL 到期或显式吊销后再访问同一条 URI，将得到 <code>RESOLUTION_ERROR</code>。</p>
+
+    <div class="actions">
+      <button id="registerBtn">Register (TTL 5s)</button>
+      <button id="refetchBtn" disabled>Re-fetch URI</button>
+      <button id="revokeBtn" disabled>Revoke</button>
+      <button id="probeBtn" disabled>原生 resolveHandle 探测</button>
+    </div>
+
+    <div class="uri-box" id="uriBox"><span class="tag">CAPABILITY URI</span>尚未注册</div>
+
+    <div class="preview" id="preview"><span class="empty">未注册</span></div>
+    <div class="countdown" id="countdown"></div>
+
+    <pre id="log">等待操作...</pre>
+  </div>
+
+  <script>
+    // 返回链接与系统返回键走同一条路径。
+    //
+    // 若用默认的 <a href="index.html"> 跳转，会**新增**一条历史记录而不是后退，
+    // 于是"首页 → 详情 → 点链接回首页 → 按系统返回"又回到详情页。改用
+    // history.back() 后历史栈不再增长，两种返回方式行为一致。
+    //
+    // 兜底分支应对直接深链进入、历史里没有上一条的情况；此时 href 的默认跳转生效。
+    function goBack(event) {
+      if (history.length > 1) {
+        event.preventDefault();
+        history.back();
+        return false;
+      }
+      return true;
+    }
+  </script>
+
+  <script>
+    const registerBtn = document.getElementById("registerBtn");
+    const refetchBtn = document.getElementById("refetchBtn");
+    const revokeBtn = document.getElementById("revokeBtn");
+    const probeBtn = document.getElementById("probeBtn");
+    const uriBox = document.getElementById("uriBox");
+    const preview = document.getElementById("preview");
+    const countdownEl = document.getElementById("countdown");
+    const logEl = document.getElementById("log");
+
+    let handleUri = null;
+    let ttlSeconds = 5;
+    let expireAt = 0;
+    let revoked = false;
+    let countdownTimer = null;
+
+    // Native injects window.NativeSampleBridge.{registerHandle, revokeHandle, probeResolveHandle};
+    // the page supplies the callback side.
+    window.LocalAssetSampleNative = {
+      onRegister(payload) {
+        handleUri = payload.uri;
+        revoked = false;
+        expireAt = Date.now() + ttlSeconds * 1000;
+        uriBox.innerHTML = `<span class="tag">CAPABILITY URI</span>${handleUri}`;
+        log(`registered handle → ${handleUri}`);
+        render();
+        startCountdown();
+        refetchBtn.disabled = false;
+        revokeBtn.disabled = false;
+        probeBtn.disabled = false;
+      },
+      onRevoke() {
+        revoked = true;
+        stopCountdown();
+        log(`revoked → ${handleUri}`);
+        render();
+      },
+      onProbe(payload) {
+        if (payload.ok) {
+          log(`probe resolveHandle → OK (still resolvable)`, "ok");
+        } else {
+          log(`probe resolveHandle → ${payload.category} / ${payload.stage ?? "-"}：${payload.message}`, "err");
+        }
+      },
+    };
+
+    function render() {
+      if (!handleUri) return;
+      // Append a cache-bust query so every re-fetch is a distinct URL. WKWebView otherwise serves
+      // the first response from its in-memory image cache on same-URL re-load and never re-invokes
+      // the scheme handler — so an expired/revoked handle would still "render ok". The reserved
+      // `_la_cb` param is stripped at handle lookup, so the capability identity is unchanged.
+      const src = `${handleUri}?_la_cb=${Date.now()}`;
+      preview.innerHTML = `<img id="handleImg" src="${src}" alt="handle resource">`;
+      const img = document.getElementById("handleImg");
+      img.addEventListener("load", () => log(`re-fetch → rendered (${revoked ? "unexpected" : "ok"})`, revoked ? "err" : "ok"));
+      img.addEventListener("error", () => log(`re-fetch → URI 不再解析（${revoked ? "已吊销" : "已过期"}）→ RESOLUTION_ERROR`, "err"));
+    }
+
+    function startCountdown() {
+      stopCountdown();
+      countdownTimer = setInterval(() => {
+        const remain = Math.max(0, Math.round((expireAt - Date.now()) / 1000));
+        countdownEl.innerHTML = `TTL 倒计时：<strong>${remain}s</strong>`;
+        if (remain <= 0) {
+          stopCountdown();
+          countdownEl.innerHTML = `TTL 已过期 —— 自动 re-fetch 验证 URI 失效`;
+          log("TTL 到期，自动 re-fetch...");
+          if (!revoked) render();
+        }
+      }, 250);
+    }
+
+    function stopCountdown() {
+      if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+    }
+
+    function log(msg, cls) {
+      const line = document.createElement("div");
+      line.className = cls ?? "";
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logEl.prepend(line);
+    }
+
+    registerBtn.addEventListener("click", () => {
+      log(`registerHandle(ttl=${ttlSeconds}s)...`);
+      NativeSampleBridge.registerHandle(ttlSeconds);
+    });
+    refetchBtn.addEventListener("click", () => {
+      if (!handleUri) return;
+      log("manual re-fetch...");
+      render();
+    });
+    revokeBtn.addEventListener("click", () => {
+      if (!handleUri) return;
+      log("revokeHandle...");
+      NativeSampleBridge.revokeHandle(handleUri);
+    });
+    probeBtn.addEventListener("click", () => {
+      if (!handleUri) return;
+      log("probe resolveHandle...");
+      NativeSampleBridge.probeResolveHandle(handleUri);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "//": "签名配置模板。复制为 signing-config.local.json 后填入本机实际值；该文件已被 .gitignore 忽略。",
+  "//name": "必须与 build-profile.json5 中 products[].signingConfig 引用的名字一致，默认为 default。",
+  "//how": "最省事的拿法：用 DevEco Studio 打开 harmony/ 工程，File > Project Structure > Signing Configs 勾选自动签名，DevEco 会把配置写进 build-profile.json5；把其中 signingConfigs[0] 整段剪切到本文件，再把 build-profile.json5 里的 signingConfigs 恢复成 []。",
+  "name": "default",
+  "type": "HarmonyOS",
+  "material": {
+    "certpath": "/绝对路径/到/xxx.cer",
+    "keyAlias": "debugKey",
+    "keyPassword": "DevEco 生成的密文口令",
+    "profile": "/绝对路径/到/xxx.p7b",
+    "signAlg": "SHA256withECDSA",
+    "storeFile": "/绝对路径/到/xxx.p12",
+    "storePassword": "DevEco 生成的密文口令"
+  }
+}

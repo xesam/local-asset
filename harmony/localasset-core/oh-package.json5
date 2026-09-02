@@ -1,0 +1,9 @@
+{
+  "name": "io.github.xesam.harmony.localasset.core",
+  "version": "0.0.1",
+  "description": "LocalAsset core engine for HarmonyOS",
+  "main": "Index.ets",
+  "author": "xesam",
+  "license": "Apache-2.0",
+  "dependencies": {}
+}

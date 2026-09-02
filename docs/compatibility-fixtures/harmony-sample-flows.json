@@ -1,0 +1,154 @@
+[
+  {
+    "name": "sample-static-mapping-flow",
+    "input": {
+      "page": "static-mapping",
+      "shellPage": "resource://rawfile/demo/pages/static-mapping.html",
+      "engineScope": "static-mapping",
+      "url": "local-asset://assets.demo.local/static/styles.css",
+      "additionalUrls": [
+        "local-asset://assets.demo.local/static/app.js",
+        "local-asset://assets.demo.local/static/images/logo.svg"
+      ],
+      "comparisonUrlScheme": "https"
+    },
+    "expected": {
+      "resolution": "hit",
+      "errorCategory": null,
+      "comparisonResourceHandledByLocalAsset": false,
+      "comparisonResourceLoadsNormally": true
+    }
+  },
+  {
+    "name": "sample-directory-routing-flow",
+    "input": {
+      "page": "directory-routing",
+      "shellPage": "resource://rawfile/demo/pages/directory-routing.html",
+      "engineScope": "directory-routing",
+      "url": "local-asset://cdn.demo.local/pkg/home.css",
+      "additionalUrls": [
+        "local-asset://cdn.demo.local/pkg/home.js",
+        "local-asset://cdn.demo.local/pkg/cards/card-a.svg",
+        "local-asset://cdn.demo.local/pkg/cards/card-b.svg"
+      ]
+    },
+    "expected": {
+      "resolution": "hit",
+      "errorCategory": null,
+      "allUrlsServedByOneDirectoryRule": true,
+      "allowedFileRootDeclared": true
+    }
+  },
+  {
+    "name": "sample-handle-lifecycle-flow",
+    "input": {
+      "page": "handle-lifecycle",
+      "shellPage": "resource://rawfile/demo/pages/handle-lifecycle.html",
+      "engineScope": "handle-lifecycle",
+      "registerHandleUri": "local-asset://lifecycle.demo.local/handles/<token>/logo.svg",
+      "ttlMillis": 5000
+    },
+    "expected": {
+      "beforeExpiry": { "resolution": "hit", "errorCategory": null },
+      "afterExpiry": { "resolution": "miss", "errorCategory": "resolution_error", "stage": "resolve" },
+      "afterRevoke": { "resolution": "miss", "errorCategory": "resolution_error", "stage": "resolve" },
+      "capabilityTokenIsOpaque": true,
+      "capabilityTokenIsCryptographicallyRandom": false
+    }
+  },
+  {
+    "name": "sample-security-models-flow",
+    "input": {
+      "page": "security-models",
+      "shellPage": "resource://rawfile/demo/pages/security-models.html",
+      "engineScope": "demo-engine",
+      "handleUri": "local-asset://security.demo.local/handles/<token>/logo.svg",
+      "matchedUrl": "local-asset://security.demo.local/engine-matched",
+      "mismatchUrl": "local-asset://security.demo.local/engine-mismatch"
+    },
+    "expected": {
+      "handlePath": { "resolution": "hit", "errorCategory": null, "scopeBypassed": true },
+      "registryMatched": { "resolution": "hit", "errorCategory": null },
+      "registryMismatch": { "resolution": "miss", "errorCategory": "security_error", "stage": "policy_post" }
+    }
+  },
+  {
+    "name": "sample-error-categories-flow",
+    "input": {
+      "page": "error-categories",
+      "shellPage": "resource://rawfile/demo/pages/error-categories.html",
+      "engineScope": "demo-engine",
+      "cases": {
+        "parse": "local-asset://",
+        "resolution": "local-asset://nobody.demo.local/x",
+        "load": "local-asset://errorcat.demo.local/load-boom",
+        "security": "local-asset://security.demo.local/engine-mismatch"
+      }
+    },
+    "expected": {
+      "parse": { "errorCategory": "parse_error", "stage": "adapter_parse" },
+      "resolution": { "errorCategory": "resolution_error", "stage": "resolve" },
+      "load": { "errorCategory": "load_error", "stage": "load" },
+      "security": { "errorCategory": "security_error", "stage": "policy_post" }
+    }
+  },
+  {
+    "name": "sample-resolver-chain-flow",
+    "input": {
+      "page": "resolver-chain",
+      "shellPage": "resource://rawfile/demo/pages/resolver-chain.html",
+      "engineScope": "resolver-chain",
+      "overrideUrl": "local-asset://chain.demo.local/base/banner.svg?mode=dark",
+      "baseUrl": "local-asset://chain.demo.local/base/card.svg",
+      "additionalBaseUrls": [
+        "local-asset://chain.demo.local/base/layout.css"
+      ]
+    },
+    "expected": {
+      "overrideResolution": "hit",
+      "overrideServedByCustomResolver": true,
+      "overrideIsDynamic": true,
+      "overrideBytesVaryByMode": true,
+      "baseResolution": "hit",
+      "baseServedByDirectoryResolver": true,
+      "shortCircuitFirstHit": true
+    }
+  },
+  {
+    "name": "sample-graceful-degradation-flow",
+    "input": {
+      "page": "graceful-degradation",
+      "shellPage": "resource://rawfile/demo/pages/graceful-degradation.html",
+      "engineScope": "graceful-degradation",
+      "validUrl": "local-asset://resilient.demo.local/static/images/logo.svg",
+      "missingUrl": "local-asset://resilient.demo.local/static/missing.svg",
+      "missingStylesheetUrl": "local-asset://resilient.demo.local/static/missing.css",
+      "revokedHandleUri": "local-asset://handles.demo.local/handles/<token>/logo.svg"
+    },
+    "expected": {
+      "validLoads": true,
+      "missingDegrades": true,
+      "revokedHandleDegrades": true,
+      "pageStaysStable": true,
+      "pipelineFailureServedAs404": true
+    }
+  },
+  {
+    "name": "sample-jsbridge-image-picker-flow",
+    "input": {
+      "page": "jsbridge-image-picker",
+      "shellPage": "resource://rawfile/demo/pages/jsbridge-image-picker.html",
+      "engineScope": "bridge-image-picker",
+      "url": "local-asset://bridge.demo.local/preview/<token>/demo-image.jpg"
+    },
+    "expected": {
+      "resolution": "hit",
+      "errorCategory": null,
+      "previewUriIsParseable": true,
+      "submitUsesPreviewUriLookup": true,
+      "previewUriPathIsIllustrativeOnly": true,
+      "originalSourceMetadataKeyIsHostConvention": "harmony.picker_uri",
+      "submitResultFields": ["contentUri", "localCachePath", "fileName", "mimeType", "size"]
+    }
+  }
+]

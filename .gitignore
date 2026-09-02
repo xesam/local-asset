@@ -1,0 +1,64 @@
+# Logs
+logs
+*.log
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Build outputs
+dist/
+coverage/
+target/
+storage/
+
+# Local tooling / AI-assistant state. Listed explicitly on purpose: a blanket `\.*`
+# silently swallowed legitimate repo dotfiles (.github/, .editorconfig, …) that
+# contributors may add. A new tool that leaves state behind gets a line here, not a catch-all.
+.codegraph/
+.codegenie/
+.claude/
+.kotlin/
+.build/
+.swiftpm/
+
+# Internal development artifacts
+superpowers/
+
+# Android
+/android/.gradle/
+/android/**/build/
+/android/local.properties
+
+# iOS / Xcode
+**/xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+DerivedData/
+
+# HarmonyOS
+/harmony/oh_modules
+/harmony/**/oh_modules
+/harmony/.hvigor
+/harmony/**/build
+/harmony/**/.test
+/harmony/.idea
+/harmony/.clangd
+/harmony/.clang-format
+/harmony/.clang-tidy
+/harmony/.appanalyzer
+/harmony/**/FixtureRoot.generated.ets
+/harmony/**/BuildProfile.ets
+/harmony/sample/src/main/resources/rawfile/demo
+/harmony/signing-config.local.json
+
+# AI assistant config (internal, not for public repo)
+CLAUDE.md

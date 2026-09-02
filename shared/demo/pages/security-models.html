@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>两套安全模型</title>
+  <link rel="stylesheet" href="_ui.css">
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #f8fafc; color: #0f172a; }
+    .page { padding: 24px; }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    .lede { margin: 0 0 16px; color: #475569; line-height: 1.5; }
+    code { background: #e2e8f0; padding: 2px 6px; border-radius: 6px; font-size: 12px; word-break: break-all; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
+    .col { padding: 16px; border-radius: 18px; background: white; border: 1px solid #e2e8f0; }
+    .col h2 { font-size: 14px; margin: 0 0 8px; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; letter-spacing: 0.06em; }
+    .badge.cap { background: #0891b2; color: white; }
+    .badge.reg { background: #7c3aed; color: white; }
+    .img-box { width: 100%; height: 140px; border-radius: 12px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; margin: 10px 0; overflow: hidden; }
+    .img-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .img-box .ph { color: #94a3b8; font-size: 13px; text-align: center; padding: 8px; }
+    .status { font-size: 12px; min-height: 18px; }
+    .ok { color: #16a34a; }
+    .err { color: #dc2626; }
+    .actions { margin: 16px 0; }
+    button { padding: 10px 14px; border: none; border-radius: 999px; background: #0f172a; color: white; }
+    pre { white-space: pre-wrap; word-break: break-word; margin-top: 16px; padding: 16px; border-radius: 16px; background: white; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <a href="index.html" onclick="return goBack(event)" style="display:inline-block;margin-bottom:14px;padding:6px 14px;border-radius:999px;background:#0f172a;color:#fff;text-decoration:none;font-size:12px;font-family:sans-serif;">&#8592; 返回示例列表</a>
+    <button type="button" onclick="location.reload()" style="margin-left:8px;padding:6px 14px;border-radius:999px;border:none;background:#475569;color:#fff;font-size:12px;font-family:sans-serif;">Reload</button>
+    <h1>两套安全模型</h1>
+    <p class="lede">同一张 logo，三种注册方式。<strong>Handle 路径</strong>靠不透明 token 授权（<code>scope=null</code>，不受作用域约束）；<strong>Registry 路径</strong>靠 <code>namespace</code> 与上下文 <code>engineScope</code> 匹配（ENGINE scope），不匹配即 <code>SECURITY_ERROR</code>。</p>
+
+    <div class="grid">
+      <div class="col">
+        <h2><span class="badge cap">HANDLE</span> 能力令牌</h2>
+        <div class="img-box" id="handleBox"><div class="ph">等待 handleUri...</div></div>
+        <div class="status" id="handleStatus">等待...</div>
+        <p style="font-size:12px;color:#475569;margin:8px 0 0">持 token 即授权，scope=null，不受作用域约束。</p>
+      </div>
+
+      <div class="col">
+        <h2><span class="badge reg">REGISTRY</span> ENGINE · namespace 匹配</h2>
+        <div class="img-box" id="matchedBox"><div class="ph">等待...</div></div>
+        <div class="status" id="matchedStatus">等待...</div>
+        <p style="font-size:12px;color:#475569;margin:8px 0 0">namespace == engineScope → 通过。</p>
+      </div>
+
+      <div class="col">
+        <h2><span class="badge reg">REGISTRY</span> ENGINE · namespace 不匹配</h2>
+        <div class="img-box" id="mismatchBox"><div class="ph">等待...</div></div>
+        <div class="status" id="mismatchStatus">等待...</div>
+        <p style="font-size:12px;color:#475569;margin:8px 0 0">namespace != engineScope → SECURITY_ERROR。</p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="probeBtn">原生探测 mismatch（engine.resolve）</button>
+    </div>
+
+    <pre id="log">等待...</pre>
+  </div>
+
+  <script>
+    // 返回链接与系统返回键走同一条路径。
+    //
+    // 若用默认的 <a href="index.html"> 跳转，会**新增**一条历史记录而不是后退，
+    // 于是"首页 → 详情 → 点链接回首页 → 按系统返回"又回到详情页。改用
+    // history.back() 后历史栈不再增长，两种返回方式行为一致。
+    //
+    // 兜底分支应对直接深链进入、历史里没有上一条的情况；此时 href 的默认跳转生效。
+    function goBack(event) {
+      if (history.length > 1) {
+        event.preventDefault();
+        history.back();
+        return false;
+      }
+      return true;
+    }
+  </script>
+
+  <script>
+    const MISMATCH_URL = "local-asset://security.demo.local/engine-mismatch";
+    const MATCHED_URL = "local-asset://security.demo.local/engine-matched";
+    const logEl = document.getElementById("log");
+
+    window.LocalAssetSampleNative = {
+      onHandleUri(uri) {
+        const box = document.getElementById("handleBox");
+        const status = document.getElementById("handleStatus");
+        box.innerHTML = `<img src="${uri}" alt="handle">`;
+        bindImg(box.querySelector("img"), status, "Handle 渲染成功（token 即授权）", "Handle 加载失败", "ok");
+      },
+      onProbe(payload) {
+        if (payload.ok) {
+          log(`probe → OK`, "ok");
+        } else {
+          log(`probe → ${payload.category} / ${payload.stage ?? "-"}：${payload.message}`, "err");
+        }
+      },
+    };
+
+    function bindImg(img, statusEl, okText, errText, okCls) {
+      if (!img) return;
+      img.addEventListener("load", () => { statusEl.textContent = okText; statusEl.className = "status " + (okCls ?? "ok"); });
+      img.addEventListener("error", () => { statusEl.textContent = errText; statusEl.className = "status err"; });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      // Handle column: ask native for the pre-registered capability URI.
+      NativeSampleBridge.getHandleUri();
+
+      // Registry matched.
+      const matchedBox = document.getElementById("matchedBox");
+      matchedBox.innerHTML = `<img src="${MATCHED_URL}" alt="matched">`;
+      bindImg(matchedBox.querySelector("img"), document.getElementById("matchedStatus"),
+        "Registry 渲染成功（namespace == engineScope）", "Registry 加载失败", "ok");
+
+      // Registry mismatch — expect SECURITY_ERROR → broken image.
+      const mismatchBox = document.getElementById("mismatchBox");
+      mismatchBox.innerHTML = `<img src="${MISMATCH_URL}" alt="mismatch">`;
+      bindImg(mismatchBox.querySelector("img"), document.getElementById("mismatchStatus"),
+        "意外：渲染成功", "SECURITY_ERROR → 拒绝渲染（namespace != engineScope）", "err");
+    });
+
+    function log(msg, cls) {
+      const line = document.createElement("div");
+      line.className = cls ?? "";
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logEl.prepend(line);
+    }
+
+    document.getElementById("probeBtn").addEventListener("click", () => {
+      log(`engine.resolve("${MISMATCH_URL}")...`);
+      NativeSampleBridge.probeResolve(MISMATCH_URL);
+    });
+  </script>
+</body>
+</html>

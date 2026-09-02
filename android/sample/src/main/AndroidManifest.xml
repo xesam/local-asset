@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 刻意不设 android:usesCleartextTraffic：演示内容唯一远程资源是一张 https 图，
+         无任何 http 装载需求。安全向库的示例应用不开多余的网络豁免。 -->
+    <application
+        android:allowBackup="true"
+        android:label="LocalAsset Sample"
+        android:supportsRtl="true"
+        android:theme="@style/LocalAssetSampleTheme">
+        <!--
+            只剩一个 Activity：演示的首页与页间跳转都在 WebView 里（shared/demo/pages/），
+            原生不再持有任何演示导航结构。见 DemoActivity 的类注释。
+        -->
+        <activity
+            android:name=".DemoActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

@@ -1,0 +1,60 @@
+[
+  {
+    "name": "default-emits-no-cors-headers",
+    "input": {
+      "allowedOrigins": [],
+      "requestOrigin": "https://app.example.com"
+    },
+    "expected": {}
+  },
+  {
+    "name": "wildcard-is-opt-in",
+    "input": {
+      "allowedOrigins": ["*"],
+      "requestOrigin": null
+    },
+    "expected": {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS"
+    }
+  },
+  {
+    "name": "allow-list-match-echoes-origin-and-varies",
+    "input": {
+      "allowedOrigins": ["https://app.example.com"],
+      "requestOrigin": "https://app.example.com"
+    },
+    "expected": {
+      "Access-Control-Allow-Origin": "https://app.example.com",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Vary": "Origin"
+    }
+  },
+  {
+    "name": "allow-list-miss-emits-nothing",
+    "input": {
+      "allowedOrigins": ["https://app.example.com"],
+      "requestOrigin": "https://evil.example.com"
+    },
+    "expected": {}
+  },
+  {
+    "name": "allow-list-without-origin-header-emits-nothing",
+    "input": {
+      "allowedOrigins": ["https://app.example.com"],
+      "requestOrigin": null
+    },
+    "expected": {}
+  },
+  {
+    "name": "wildcard-member-wins-over-explicit-entries",
+    "input": {
+      "allowedOrigins": ["https://app.example.com", "*"],
+      "requestOrigin": "https://other.example.com"
+    },
+    "expected": {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS"
+    }
+  }
+]

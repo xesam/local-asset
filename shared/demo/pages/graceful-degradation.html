@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>优雅降级</title>
+  <link rel="stylesheet" href="_ui.css">
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #f8fafc; color: #0f172a; }
+    .page { padding: 24px; }
+    .pill { display: inline-block; padding: 6px 12px; border-radius: 999px; background: #0f172a; color: white; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .panel { margin-top: 18px; padding: 18px; border-radius: 20px; background: rgba(255,255,255,0.85); }
+    .row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+    .row:last-child { border-bottom: none; }
+    .row img { width: 64px; height: 64px; border-radius: 10px; background: #e2e8f0; }
+    .row .meta { flex: 1; }
+    .row .name { font-weight: 600; }
+    .row .url { font-size: 12px; color: #64748b; word-break: break-all; }
+    .row .state { font-size: 13px; padding: 4px 10px; border-radius: 999px; }
+    .state.loaded { background: #dcfce7; color: #166534; }
+    .state.degraded { background: #fef9c3; color: #854d0e; }
+    .state.revoked { background: #fee2e2; color: #991b1b; }
+    code { word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <a href="index.html" onclick="return goBack(event)" style="display:inline-block;margin-bottom:14px;padding:6px 14px;border-radius:999px;background:#0f172a;color:#fff;text-decoration:none;font-size:12px;font-family:sans-serif;">&#8592; 返回示例列表</a>
+    <button type="button" onclick="location.reload()" style="margin-left:8px;padding:6px 14px;border-radius:999px;border:none;background:#475569;color:#fff;font-size:12px;font-family:sans-serif;">Reload</button>
+    <span class="pill">优雅降级</span>
+    <h1>缺失 / 已吊销子资源不崩溃</h1>
+    <p>页面请求 4 条 <code>local-asset://</code> 资源：一条有效静态资源、两条刻意缺失的静态资源、一条已吊销的 handle URI。缺失与吊销通过 error 事件降级，页面保持稳定。</p>
+    <div class="panel" id="panel"></div>
+  </div>
+  <script>
+    // 返回链接与系统返回键走同一条路径。
+    //
+    // 若用默认的 <a href="index.html"> 跳转，会**新增**一条历史记录而不是后退，
+    // 于是"首页 → 详情 → 点链接回首页 → 按系统返回"又回到详情页。改用
+    // history.back() 后历史栈不再增长，两种返回方式行为一致。
+    //
+    // 兜底分支应对直接深链进入、历史里没有上一条的情况；此时 href 的默认跳转生效。
+    function goBack(event) {
+      if (history.length > 1) {
+        event.preventDefault();
+        history.back();
+        return false;
+      }
+      return true;
+    }
+  </script>
+  <script>
+    const revokedUri = window.LocalAssetSampleBridge.getRevokedHandleUri();
+    const cases = [
+      { name: "有效静态资源", url: "local-asset://resilient.demo.local/static/images/logo.svg", stateClass: "loaded" },
+      { name: "缺失图片", url: "local-asset://resilient.demo.local/static/missing.svg", stateClass: "degraded" },
+      { name: "缺失样式表", url: "local-asset://resilient.demo.local/static/missing.css", stateClass: "degraded" },
+      { name: "已吊销 handle URI", url: revokedUri, stateClass: "revoked" },
+    ];
+
+    const panel = document.getElementById("panel");
+    cases.forEach((c) => {
+      const row = document.createElement("div");
+      row.className = "row";
+      const img = document.createElement("img");
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      const name = document.createElement("div");
+      name.className = "name";
+      name.textContent = c.name;
+      const url = document.createElement("div");
+      url.className = "url";
+      url.textContent = c.url;
+      meta.append(name, url);
+      const state = document.createElement("span");
+      state.className = "state " + c.stateClass;
+      state.textContent = "等待…";
+      row.append(img, meta, state);
+      panel.append(row);
+
+      const onOk = () => { state.textContent = "已加载"; console.log("[LocalAssetSample] loaded", c.url); };
+      const onErr = () => {
+        state.textContent = c.name.includes("吊销") ? "已吊销，已降级" : "缺失，已降级";
+        console.log("[LocalAssetSample] degraded", c.url);
+      };
+      img.addEventListener("load", onOk);
+      img.addEventListener("error", onErr);
+      img.src = c.url;
+    });
+
+    // Missing stylesheet — log its fallback separately (no img).
+    const missingCss = document.createElement("link");
+    missingCss.rel = "stylesheet";
+    missingCss.href = "local-asset://resilient.demo.local/static/missing.css";
+    missingCss.addEventListener("error", () => console.log("[LocalAssetSample] missing stylesheet fell back"));
+    document.head.appendChild(missingCss);
+  </script>
+</body>
+</html>
